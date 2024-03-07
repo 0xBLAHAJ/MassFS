@@ -2,41 +2,44 @@
 
 namespace path_manager
 {
-	static DWORD re_run_as_admin( const std::filesystem::path& currentExecutionPath )
+	namespace
 	{
-		const auto operation = L"runas";
-		const auto program = L"powershell.exe";
-
-		std::wstringstream wss;
-		wss << L"-Command \"& '" << currentExecutionPath.wstring() << L"' 'path' 'ps'\"";
-
-		const auto args = wss.str();
-
-		SHELLEXECUTEINFO sei = {};
-		sei.lpVerb = operation;
-		sei.lpFile = program;
-		sei.lpParameters = args.c_str();
-		sei.nShow = SW_SHOW;
-		sei.fMask = SEE_MASK_DEFAULT;
-
-		if ( !ShellExecuteEx( &sei ) )
+		DWORD re_run_as_admin( const std::filesystem::path& currentExecutionPath )
 		{
-			const DWORD dwError = GetLastError();
-			return dwError;
+			const auto operation = L"runas";
+			const auto program = L"powershell.exe";
+
+			std::wstringstream wss;
+			wss << L"-Command \"& '" << currentExecutionPath.wstring() << L"' 'path' 'ps'\"";
+
+			const auto args = wss.str();
+
+			SHELLEXECUTEINFO sei = {};
+			sei.lpVerb = operation;
+			sei.lpFile = program;
+			sei.lpParameters = args.c_str();
+			sei.nShow = SW_SHOW;
+			sei.fMask = SEE_MASK_DEFAULT;
+
+			if ( !ShellExecuteEx( &sei ) )
+			{
+				const DWORD dwError = GetLastError();
+				return dwError;
+			}
+
+			return 0;
 		}
 
-		return 0;
-	}
+		std::string get_string_error( const DWORD error )
+		{
+			LPSTR buffer = nullptr;
+			const size_t size = FormatMessageA( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, error, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ), reinterpret_cast<LPSTR>( &buffer ), 0, nullptr );
 
-	static std::string get_string_error( const DWORD error )
-	{
-		LPSTR buffer = nullptr;
-		const size_t size = FormatMessageA( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, error, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ), reinterpret_cast<LPSTR>( &buffer ), 0, nullptr );
+			std::string message( buffer, size );
+			LocalFree( buffer );
 
-		std::string message( buffer, size );
-		LocalFree( buffer );
-
-		return message;
+			return message;
+		}
 	}
 
 	bool execute( const std::filesystem::path& currentExecutionPath, const bool isExecutedByPowershell )

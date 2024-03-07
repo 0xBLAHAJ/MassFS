@@ -15,7 +15,7 @@ inline std::chrono::high_resolution_clock::time_point g_actionStart;
 inline const char* VERSION = "0.01";
 constexpr long long BUFFER_SIZE = 4096;
 
-constexpr uint64_t fnv1a64( const char* apStr )
+constexpr uint64_t HASH( const char* apStr )
 {
 	uint64_t hash = 14695981039346656037ULL; // 64 bit offset_basis = 14695981039346656037
 
