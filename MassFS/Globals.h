@@ -12,8 +12,8 @@ inline long long g_previousPercentage = -1;
 inline int g_baseLine = 0;
 inline std::chrono::high_resolution_clock::time_point g_actionStart;
 
-inline const char* VERSION = "0.01";
-constexpr long long BUFFER_SIZE = 4096;
+inline const char* VERSION = "0.1.1";
+constexpr long long BUFFER_SIZE = 65536;
 
 constexpr uint64_t fnv1a64( const char* apStr )
 {
