@@ -4,64 +4,67 @@
 
 namespace hard_delete
 {
-	static bool zero_out_file( const std::filesystem::path& path )
+	namespace
 	{
-		if ( std::ofstream fileStream( path, std::ios::binary ); fileStream )
+		bool zero_out_file( const std::filesystem::path& path )
 		{
-			const auto fileSize = static_cast<long long>( file_size( path ) );
-			constexpr char buffer[ BUFFER_SIZE ] = { 0 };
-
-			for ( long long written = 0; written < fileSize; written += BUFFER_SIZE )
+			if ( std::ofstream fileStream( path, std::ios::binary ); fileStream )
 			{
-				if ( const long long currentPercentage = static_cast<long long>( static_cast<double>( g_currentBytes ) / static_cast<double>( g_maxBytes ) * 100 ); g_previousPercentage != currentPercentage )
+				const auto fileSize = static_cast<long long>( file_size( path ) );
+				constexpr char buffer[ BUFFER_SIZE ] = { 0 };
+
+				for ( long long written = 0; written < fileSize; written += BUFFER_SIZE )
 				{
-					g_previousPercentage = currentPercentage;
-					helpers::print_percentage( currentPercentage );
+					if ( const long long currentPercentage = static_cast<long long>( static_cast<double>( g_currentBytes ) / static_cast<double>( g_maxBytes ) * 100 ); g_previousPercentage != currentPercentage )
+					{
+						g_previousPercentage = currentPercentage;
+						helpers::print_percentage( currentPercentage );
+					}
+
+					const auto bytesCount = min( BUFFER_SIZE, fileSize - written );
+					fileStream.write( buffer, bytesCount );
+					g_currentBytes += bytesCount;
 				}
 
-				const auto bytesCount = min( BUFFER_SIZE, fileSize - written );
-				fileStream.write( buffer, bytesCount );
-				g_currentBytes += bytesCount;
+				fileStream.close();
 			}
-
-			fileStream.close();
-		}
-		else
-		{
-			std::println( "Couldn't open {}. Access Denied.", path.stem().string() );
-			return false;
-		}
-
-		return true;
-	}
-
-	static bool zero_out_directory( const std::filesystem::path& path )
-	{
-		return std::ranges::all_of( std::filesystem::directory_iterator( path ), [] ( const std::filesystem::directory_entry& entry ) { return zero_out_file( entry ); } );
-	}
-
-	static bool query_user( const std::string& stemName )
-	{
-		std::println( "'{}' is a folder, but you called massfs d with 'u' as a parameter, 'b' should be used for directories as they are by definition a batch operation.", stemName );
-		std::println( "Proceed with the deletion? Y/N" );
-
-		while ( true )
-		{
-			std::string response{};
-			std::cin >> response;
-
-			if ( response == "Y" || response == "y" )
+			else
 			{
-				std::println( "Proceeding with Batch Deletion of files contained within {}", stemName );
-				return true;
-			}
-
-			if ( response == "N" || response == "n" )
-			{
+				std::println( "Couldn't open {}. Access Denied.", path.stem().string() );
 				return false;
 			}
 
-			std::println( "Invalid Response! Please input Y or N." );
+			return true;
+		}
+
+		bool zero_out_directory( const std::filesystem::path& path )
+		{
+			return std::ranges::all_of( std::filesystem::directory_iterator( path ), [] ( const std::filesystem::directory_entry& entry ) { return zero_out_file( entry ); } );
+		}
+
+		bool query_user( const std::string& stemName )
+		{
+			std::println( "'{}' is a folder, but you called massfs d with 'u' as a parameter, 'b' should be used for directories as they are by definition a batch operation.", stemName );
+			std::println( "Proceed with the deletion? Y/N" );
+
+			while ( true )
+			{
+				std::string response{};
+				std::cin >> response;
+
+				if ( response == "Y" || response == "y" )
+				{
+					std::println( "Proceeding with Batch Deletion of files contained within {}", stemName );
+					return true;
+				}
+
+				if ( response == "N" || response == "n" )
+				{
+					return false;
+				}
+
+				std::println( "Invalid Response! Please input Y or N." );
+			}
 		}
 	}
 
