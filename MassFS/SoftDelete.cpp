@@ -17,29 +17,9 @@ namespace soft_delete
 
 		if ( is_directory( fileToDelete ) )
 		{
-			if ( !isBatch )
+			if ( !isBatch && !helpers::query_user_mismatch( stemName, "d" ) )
 			{
-				std::println( "'{}' is a folder, but you called massfs d with 'u' as a parameter, 'b' should be used for directories as they are by definition a batch operation.", stemName );
-				std::println( "Proceed with the deletion? Y/N" );
-
-				while ( true )
-				{
-					std::string response{};
-					std::cin >> response;
-
-					if ( response == "Y" || response == "y" )
-					{
-						std::println( "Proceeding with Batch Deletion of files contained by {}", stemName );
-						break;
-					}
-
-					if ( response == "N" || response == "n" )
-					{
-						return false;
-					}
-
-					std::println( "Invalid Response! Please input Y or N." );
-				}
+				return false;
 			}
 
 			const size_t count = helpers::get_directory_file_count( fileToDelete );

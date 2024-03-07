@@ -2,7 +2,7 @@
 
 namespace helpers
 {
-	void move_cursor( const int x = -1, const int y = -1 )
+	void move_cursor( const int x, const int y )
 	{
 		const HANDLE handle = GetStdHandle( STD_OUTPUT_HANDLE );
 		CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
@@ -29,6 +29,7 @@ namespace helpers
 		{
 			move_cursor( -1, 2 + g_baseLine );
 			clear_previous_line();
+
 			if ( percent != 0 )
 			{
 				const auto now = std::chrono::high_resolution_clock::now();
@@ -90,5 +91,30 @@ namespace helpers
 		}
 
 		return std::format( "{} B", bytes );
+	}
+
+	bool query_user_mismatch( const std::string& stemName, const std::string& actionValue )
+	{
+		std::println( "'{}' is a folder, but you called massfs {} with 'u' as a parameter, 'b' should be used for directories as they are by definition a batch operation.", stemName, actionValue );
+		std::println( "Proceed with the deletion? Y/N" );
+
+		while ( true )
+		{
+			std::string response{};
+			std::cin >> response;
+
+			if ( response == "Y" || response == "y" )
+			{
+				std::println( "Proceeding with Batch Deletion of files contained within {}", stemName );
+				return true;
+			}
+
+			if ( response == "N" || response == "n" )
+			{
+				return false;
+			}
+
+			std::println( "Invalid Response! Please input Y or N." );
+		}
 	}
 }

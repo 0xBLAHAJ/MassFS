@@ -2,7 +2,7 @@
 
 #include "Globals.h"
 
-namespace hard_delete
+namespace zero_out
 {
 	namespace
 	{
@@ -41,31 +41,6 @@ namespace hard_delete
 		{
 			return std::ranges::all_of( std::filesystem::directory_iterator( path ), [] ( const std::filesystem::directory_entry& entry ) { return zero_out_file( entry ); } );
 		}
-
-		bool query_user( const std::string& stemName )
-		{
-			std::println( "'{}' is a folder, but you called massfs d with 'u' as a parameter, 'b' should be used for directories as they are by definition a batch operation.", stemName );
-			std::println( "Proceed with the deletion? Y/N" );
-
-			while ( true )
-			{
-				std::string response{};
-				std::cin >> response;
-
-				if ( response == "Y" || response == "y" )
-				{
-					std::println( "Proceeding with Batch Deletion of files contained within {}", stemName );
-					return true;
-				}
-
-				if ( response == "N" || response == "n" )
-				{
-					return false;
-				}
-
-				std::println( "Invalid Response! Please input Y or N." );
-			}
-		}
 	}
 
 	bool execute( const std::filesystem::path& fileToDelete, const char* modifier )
@@ -81,12 +56,9 @@ namespace hard_delete
 		const bool isDir = is_directory( fileToDelete );
 
 		// User is trying to delete a directory without explicitly calling for a batch delete, we're making sure that this is intended
-		if ( isDir && !isBatch )
+		if ( isDir && !isBatch && !helpers::query_user_mismatch( stemName, "z" ) )
 		{
-			if ( !query_user( stemName ) )
-			{
-				return false;
-			}
+			return false;
 		}
 
 		g_actionStart = std::chrono::high_resolution_clock::now();

@@ -14,7 +14,7 @@ namespace
 		std::println( "To get started, run massfs /? or massfs help to get a list of what every argument does." );
 	}
 
-	bool handle_action( const int argc, char* argv[ ], const uint64_t actionHash )
+	uint8_t handle_action( const int argc, char* argv[ ], const uint64_t actionHash )
 	{
 		bool actionSuccess = false;
 
@@ -24,17 +24,10 @@ namespace
 
 		switch ( actionHash )
 		{
-		case HASH( "h" ):
-		case HASH( "?" ):
-		case HASH( "help" ):
-		case HASH( "/?" ):
-			actionSuccess = true;
-			help::execute();
-			break;
-		case HASH( "d" ):
-		case HASH( "delete" ):
-		case HASH( "r" ):
-		case HASH( "remove" ):
+		HELP_HASHES
+			help::execute( argc > 2 ? std::optional{ HASH( argv[ 2 ] ) } : std::nullopt );
+			return 2;
+		SOFT_DELETE_HASHES
 			if ( argc <= 3 )
 			{
 				std::println( "Not enough arguments for this command, the correct usage is massfs r <b/u> <path>" );
@@ -42,16 +35,21 @@ namespace
 			}
 			actionSuccess = soft_delete::execute( std::filesystem::path( argv[ 3 ] ), modifier );
 			break;
-		case HASH( "z" ):
-		case HASH( "zero" ):
-		case HASH( "0" ):
-		case HASH( "hard_delete" ):
+		ZERO_OUT_HASHES
 			if ( argc <= 3 )
 			{
 				std::println( "Not enough arguments for this command, the correct usage is massfs z <b/u> <path>" );
 				break;
 			}
-			actionSuccess = hard_delete::execute( std::filesystem::path( argv[ 3 ] ), modifier );
+			actionSuccess = zero_out::execute( std::filesystem::path( argv[ 3 ] ), modifier );
+			break;
+		SAFE_DELETE_HASHES
+			if ( argc <= 3 )
+			{
+				std::println( "Not enough arguments for this command, the correct usage is massfs z <b/u> <path>" );
+				break;
+			}
+			actionSuccess = safe_delete::execute( std::filesystem::path( argv[ 3 ] ), modifier );
 			break;
 		case HASH( "path" ):
 			actionSuccess = path_manager::execute( std::filesystem::path( source ), argc > 2 && strcmp( argv[ 2 ], "ps" ) == 0 );
@@ -79,14 +77,17 @@ int main( const int argc, char* argv[ ] )
 	GetConsoleScreenBufferInfo( handle, &consoleInfo );
 	g_baseLine = consoleInfo.dwCursorPosition.Y;
 
-	const bool actionSuccess = handle_action( argc, argv, HASH( argv[ 1 ] ) );
+	const uint8_t actionSuccess = handle_action( argc, argv, HASH( argv[ 1 ] ) );
 
-	if ( !actionSuccess )
+	switch ( actionSuccess )
 	{
+	case 0:
 		std::println( "Action couldn't be processed. See above for further information." );
 		return 1;
+	case 1:
+		std::println( "Action was processed succesfully!" );
+		return 0;
+	default:
+		return 0;
 	}
-
-	std::println( "Action was processed succesfully!" );
-	return 0;
 }

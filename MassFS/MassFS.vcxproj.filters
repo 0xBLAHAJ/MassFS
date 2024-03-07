@@ -5,7 +5,7 @@
     <ClCompile Include="Globals.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
-    <ClCompile Include="HardDelete.cpp">
+    <ClCompile Include="ZeroOut.cpp">
       <Filter>Commands</Filter>
     </ClCompile>
     <ClCompile Include="Help.cpp">
@@ -15,6 +15,9 @@
       <Filter>Commands</Filter>
     </ClCompile>
     <ClCompile Include="SoftDelete.cpp">
+      <Filter>Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="SafeDelete.cpp">
       <Filter>Commands</Filter>
     </ClCompile>
   </ItemGroup>

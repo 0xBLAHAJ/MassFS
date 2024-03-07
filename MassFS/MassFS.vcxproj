@@ -133,11 +133,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Globals.cpp" />
+    <ClCompile Include="SafeDelete.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Globals.h" />
-    <ClCompile Include="HardDelete.cpp" />
+    <ClCompile Include="ZeroOut.cpp" />
     <ClCompile Include="Help.cpp" />
     <ClCompile Include="PathManager.cpp" />
     <ClCompile Include="SoftDelete.cpp" />
