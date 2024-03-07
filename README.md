@@ -9,7 +9,7 @@ You can download a pre-compiled stable release [here](https://github.com/0xBLAHA
 ## Usage
 
 ```powershell
-massfs <command> <b(atch)/u(nique)> <path>
+massfs <command> <u(nique)/b(atch)> <path>
 ```
 
 For a list of commands and their usage, use `massfs ?`, you can also use `massfs ? <command>` for more details about one specific command.
