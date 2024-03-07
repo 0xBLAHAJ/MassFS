@@ -68,12 +68,53 @@ namespace
 		}
 	}
 
-	bool SoftDelete( const fs::path& file_to_delete )
+	std::size_t NumberOfFilesInDirectory(std::filesystem::path path)
+	{
+		using std::filesystem::directory_iterator;
+		return std::distance(directory_iterator(path), directory_iterator{});
+	}
+
+	bool SoftDelete( const fs::path& file_to_delete, const char* modifier )
 	{
 		if ( !exists( file_to_delete ) )
 		{
 			std::println( "File {} does not exist in that directory.", file_to_delete.stem().string() );
 			return false;
+		}
+
+		const std::string stem_name = file_to_delete.stem().string();
+		const bool is_batch = strcmp(modifier, "b") == 0 || strcmp(modifier, "batch") == 0;
+
+		if (is_directory(file_to_delete))
+		{
+			if (!is_batch)
+			{
+				std::println("'{}' is a folder, but you called massfs d with 'u' as a parameter, 'b' should be used for directories as they are by definition a batch operation.", stem_name);
+				std::println("Proceed with the deletion? Y/N");
+
+				while (true)
+				{
+					std::string Response{};
+					std::cin >> Response;
+
+					if (Response == "Y" || Response == "y")
+					{
+						std::println("Proceeding with Batch Deletion of files contained by {}", stem_name);
+						break;
+					}
+					else if (Response == "N" || Response == "n")
+					{
+						return false;
+					}
+
+					std::println("Invalid Response! Please input Y or N.");
+				}
+			}
+
+			const size_t count = NumberOfFilesInDirectory(file_to_delete);
+			fs::remove_all(file_to_delete);
+			std::println("Deleted {} files inside of '{}'.", count, stem_name);
+			return true;
 		}
 
 		if ( !remove( file_to_delete ) )
@@ -85,7 +126,7 @@ namespace
 		return true;
 	}
 
-	bool HardDelete( const fs::path& file_to_delete )
+	bool HardDelete(const fs::path& file_to_delete, const char* modifier )
 	{
 		action_start = std::chrono::high_resolution_clock::now();
 		if ( !exists( file_to_delete ) )
@@ -293,44 +334,56 @@ int main( const int argc, char* argv[ ] )
 
 	const char* RESERVED = argv[ 0 ];
 	const char* ACTION = argv[ 1 ];
+	const char* MODIFIER = argc > 2 ? argv[2] : "u";
 
 	bool Succeeded = false;
 
 	switch ( fnv1a64( ACTION ) )
 	{
+	case fnv1a64("h"):
+	case fnv1a64("?"):
+	case fnv1a64("help"):
+	case fnv1a64("/?"):
+		Succeeded = true;
+		PrintHelp();
+		break;
+	case fnv1a64("d"):
+	case fnv1a64("delete"):
+	case fnv1a64("r"):
+	case fnv1a64("remove"):
+		if (argc <= 3)
+		{
+			std::println("Not enough arguments for this command, the correct usage is massfs r <b/u> <path>");
+			break;
+		}
+		Succeeded = SoftDelete(fs::path(argv[3]), MODIFIER);
+		break;
 	case fnv1a64( "z" ):
 	case fnv1a64( "zero" ):
 	case fnv1a64( "0" ):
 	case fnv1a64( "hard_delete" ):
 		if ( argc <= 3 )
 		{
-			std::print( "Not enough arguments for this command, the correct usage is massfs z <b/u> <path>\n" );
+			std::println( "Not enough arguments for this command, the correct usage is massfs z <b/u> <path>" );
 			break;
 		}
-		Succeeded = HardDelete( fs::path( argv[ 3 ] ) );
-		break;
-	case fnv1a64( "h" ):
-	case fnv1a64( "?" ):
-	case fnv1a64( "help" ):
-	case fnv1a64( "/?" ):
-		Succeeded = true;
-		PrintHelp();
+		Succeeded = HardDelete( fs::path( argv[ 3 ] ), MODIFIER );
 		break;
 	case fnv1a64( "path" ):
 		Succeeded = AddToSystemPath( fs::path( RESERVED ), argc > 2 && strcmp( argv[ 2 ], "ps" ) == 0 );
 		break;
 	default:
 		Succeeded = false;
-		std::print( "Could not find command {}, please run 'massfs help' for more information", ACTION );
+		std::println( "Could not find command {}, please run 'massfs help' for more information", ACTION );
 		break;
 	}
 
 	if ( !Succeeded )
 	{
-		std::print( "\nAction couldn't be processed. See above for further information." );
+		std::println( "Action couldn't be processed. See above for further information." );
 		return 1;
 	}
 
-	std::print( "\nAction was processed succesfully!" );
+	std::println( "Action was processed succesfully!" );
 	return 0;
 }
