@@ -164,6 +164,17 @@ namespace
 		return 0;
 	}
 
+	std::string GetStringError(DWORD error) 
+	{
+		LPSTR message_buffer = nullptr;
+		size_t size = FormatMessageA( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPSTR>(&message_buffer), 0, nullptr);
+		
+		std::string message(message_buffer, size);
+		LocalFree(message_buffer);
+
+		return message;
+	}
+
 	bool AddToSystemPath( const fs::path& current_execution_path, const bool is_executed_by_powershell = false )
 	{
 		if ( !is_executed_by_powershell )
@@ -177,7 +188,7 @@ namespace
 				std::print( "Please click 'Yes' on the UAC Request if you want to add MassFS to the System Path, this action requires Admin Privileges.\n" );
 				return false;
 			default:
-				std::print( "dwError was {}", res );
+				std::print( "Could not start a new PowerShell, Error was: {}", GetStringError(res) );
 				return false;
 			}
 		}
@@ -188,7 +199,7 @@ namespace
 		HKEY hKey;
 		const auto sub_key = R"(SYSTEM\CurrentControlSet\Control\Session Manager\Environment)";
 		const auto value_name = "Path";
-		DWORD size;
+		DWORD size = 0;
 		DWORD value_type = REG_EXPAND_SZ;
 
 		std::print( "Opening HKEY_LOCAL_MACHINE/System/CurrentControlSet/Control/Session Manager/Environment/Path...\n" );
